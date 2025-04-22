@@ -1,0 +1,107 @@
+version: "3.8"
+
+services:
+  postgres:
+    image: postgres:13
+    container_name: postgres
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin
+      POSTGRES_DB: youtube_analytics
+    ports:
+      - "5432:5432"
+    restart: always
+
+  airflow-init:
+    image: apache/airflow:2.10.5
+    container_name: airflow-init
+    depends_on:
+      - postgres
+    environment:
+      - AIRFLOW__CORE__EXECUTOR=LocalExecutor
+      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://admin:admin@postgres:5432/youtube_analytics
+    volumes:
+      - ./dags:/opt/airflow/dags
+      - ./logs:/opt/airflow/logs
+      - ./plugins:/opt/airflow/plugins
+    entrypoint: >
+      /bin/bash -c "
+      pip install apache-airflow-providers-postgres &&
+      airflow db migrate &&
+      airflow users create --username admin --password admin --firstname admin --lastname admin --role Admin --email admin@123.com"
+    restart: on-failure
+
+  airflow-webserver:
+    image: apache/airflow:2.10.5
+    container_name: airflow-webserver
+    depends_on:
+      - postgres
+      - airflow-init
+    environment:
+      - AIRFLOW__CORE__EXECUTOR=LocalExecutor
+      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://admin:admin@postgres:5432/youtube_analytics
+      - AIRFLOW__WEBSERVER__WEB_SERVER_HOST=0.0.0.0
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./dags:/opt/airflow/dags
+      - ./logs:/opt/airflow/logs
+      - ./plugins:/opt/airflow/plugins
+    command: webserver
+    restart: always
+
+  airflow-scheduler:
+    image: apache/airflow:2.10.5
+    container_name: airflow-scheduler
+    depends_on:
+      - airflow-webserver
+    environment:
+      - AIRFLOW__CORE__EXECUTOR=LocalExecutor
+      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://admin:admin@postgres:5432/youtube_analytics
+    volumes:
+      - ./dags:/opt/airflow/dags
+      - ./logs:/opt/airflow/logs
+      - ./plugins:/opt/airflow/plugins
+    command: scheduler
+    restart: always
+
+  grafana:
+    image: grafana/grafana-oss
+    container_name: grafana
+    depends_on:
+      - postgres
+    volumes:
+      - grafana-storage:/var/lib/grafana
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    ports:
+      - "3000:3000"
+    restart: always
+
+  spark-master:
+    image: bitnami/spark:latest
+    container_name: spark-master
+    environment:
+      - SPARK_MODE=master
+      - SPARK_RPC_AUTHENTICATION_ENABLED=no
+      - SPARK_RPC_ENCRYPTION_ENABLED=no
+    ports:
+      - "8081:8081" # Spark Web UI
+      - "7077:7077" # Spark Master Port
+    restart: always
+
+  spark-worker:
+    image: bitnami/spark:latest
+    container_name: spark-worker
+    depends_on:
+      - spark-master
+    environment:
+      - SPARK_MODE=worker
+      - SPARK_MASTER_URL=spark://spark-master:7077
+    ports:
+      - "8082:8082" # Spark Worker UI
+    restart: always
+
+volumes:
+  grafana-storage:
