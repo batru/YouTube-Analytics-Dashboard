@@ -8,6 +8,7 @@ from datetime import date
 
 spark = SparkSession.builder\
         .appName("YoutubeAnalytics")\
+        .config("spark.jars", "/mnt/c/Users/batru/Downloads/Work/LUX-DE/De_projects/Youtube_Analytics_Pipeline/jars/postgresql-42.6.0.jar") \
         .master("local[*]")\
         .getOrCreate()
 

@@ -1,5 +1,6 @@
 from main import getSubscribers, get_videos, best_post_time
-jdbc_url = "jdbc:postgresql://localhost:5432/youtube_analytics"
+
+jdbc_url = "jdbc:postgresql://postgres:5432/youtube_analytics"
 
 properties = {
     "user": "admin",
@@ -24,4 +25,9 @@ def loadData():
 
     best_videos_df.write \
     .jdbc(url=jdbc_url, table="best_performing_videos", mode='append', properties=properties)
+
+
+loadData()
+
+
 
