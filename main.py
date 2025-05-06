@@ -3,7 +3,7 @@ import os
 from googleapiclient.discovery import build
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import col, hour, date_format
-from datetime import date
+from datetime import date, datetime
 
 
 spark = SparkSession.builder\
@@ -36,14 +36,14 @@ def getSubscribers():
     # get data from youtube channel
     request = youtube.channels().list(
         part = 'statistics',
-        id = 'UCtxD0x6AuNNqdXO9Wp5GHew'
+        id = 'UCS-zdr8_cuUGNvOhLKUkjZQ'
 
     )
 
     response = request.execute()
     subscriber_count = response['items'][0]['statistics']['subscriberCount']
-    date_at = date.today()
-    subscriber_data = [(subscriber_count, date_at)]
+    date_at = datetime.now()
+    subscriber_data = [(int(subscriber_count), date_at)]
     # @todo - add  current datetime
     df = spark.createDataFrame(subscriber_data, ["subscriber_count", "date"])
 
@@ -149,4 +149,5 @@ def best_post_time(videos):
 
 # grouped_df = best_post_time(videos)
 # grouped_df.show()
+
 
