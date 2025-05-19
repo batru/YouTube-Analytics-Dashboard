@@ -51,6 +51,15 @@ Example channels used for testing: [`@cristiano`](https://youtube.com/@cristiano
 
 ---
 
+
+### **Dashboard Preview**
+
+The Grafana dashboard visualizes channel performance metrics in real time:
+
+![Dashboard Screenshot](https://github.com/batru/YouTube-Analytics-Dashboard/blob/main/dashboard.PNG?raw=true)
+
+---
+
 ### **Technologies Used**
 
 - Python  
